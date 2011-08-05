@@ -20,17 +20,20 @@ module OmniAuth
         client_options[:authorize_path] = '/oauth/authorize' unless options[:sign_in] == false
         super(app, options[:name] || :twitter, consumer_key, consumer_secret, client_options, options, &block)
       end
-
+      
       def auth_hash
-        OmniAuth::Utils.deep_merge(
-          super, {
-            'uid' => @access_token.params[:user_id],
+        user_info = {
+          'uid' => @access_token.params[:user_id]
+        }
+        unless options[:info].try(:call, @access_token.params[:user_id])
+          user_info.merge!({
             'user_info' => user_info,
             'extra' => {
-              'user_hash' => user_hash,
-            },
-          }
-        )
+              'user_hash' => user_hash
+            }
+          })
+        end
+        OmniAuth::Utils.deep_merge(super, user_info)
       end
 
       def user_info

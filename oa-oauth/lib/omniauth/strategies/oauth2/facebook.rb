@@ -25,17 +25,21 @@ module OmniAuth
 
         super(app, :facebook, client_id, client_secret, client_options, options, &block)
       end
-
+      
       def auth_hash
-        OmniAuth::Utils.deep_merge(
-          super, {
+        if facebook_session.present? && options[:info].try(:call, facebook_session['uid'])
+          OmniAuth::Utils.deep_merge(super, {
+            'uid' => facebook_session['uid']
+          })
+        else
+          OmniAuth::Utils.deep_merge(super, {
             'uid' => user_data['id'],
             'user_info' => user_info,
             'extra' => {
-              'user_hash' => user_data,
-            },
-          }
-        )
+              'user_hash' => user_data
+            }
+          })
+        end
       end
 
       def user_data
